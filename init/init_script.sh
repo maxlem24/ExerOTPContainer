@@ -13,4 +13,6 @@ wait_mariadb(){
 
 wait_mariadb
 
+sed -i -e "s/password/$RANDOMPASS/g" /root/init_db.sql
+
 mariadb < /root/init_db.sql
