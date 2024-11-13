@@ -460,13 +460,13 @@ echo ""
 
 delete_call_to_wizard
 
-ask_for_keyboard_language
+# ask_for_keyboard_language
 
-ask_network_settings
-while [ $? -ne 0 ]; do
-	sleep ${WAIT_SEC}
-	ask_network_settings
-done
+# ask_network_settings
+# while [ $? -ne 0 ]; do
+	# sleep ${WAIT_SEC}
+	# ask_network_settings
+# done
 
 ask_time_settings
 
