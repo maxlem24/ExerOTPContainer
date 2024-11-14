@@ -16,3 +16,7 @@ wait_mariadb
 sed -i -e "s/password/$RANDOMPASS/g" /root/init_db.sql
 
 mariadb < /root/init_db.sql
+
+bash /usr/local/bin/wizard.sh
+
+/bin/bash
