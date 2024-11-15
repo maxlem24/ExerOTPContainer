@@ -264,7 +264,7 @@ ask_host_settings(){
 	sed -i -e "s/${DEFAULTFQDN}/${FQDN}/g" ${HOSTS_FILE}
 	sed -i -e "s/${DEFAULTHOSTNAME}/${HOSTNAME}/g" ${HOSTS_FILE} 
 	
-	sed -i -e "s/${DEFAULTDOMAIN}/${SUFFIX/g" ${DNS_FILE} 
+	sed -i -e "s/${DEFAULTDOMAIN}/${SUFFIX}/g" ${DNS_FILE} 
 	
 	if [ $? -ne 0 ]; then
 		echo "[⚠] Error: Unable to configure hostname."
@@ -488,10 +488,6 @@ echo ""
 echo "+------------------------------------------+"
 echo "|       [✔️] Initial setup completed        |"
 echo "+------------------------------------------+"
-echo "[➖] The server is restarting... Please wait..."
-echo ""
 
-sleep 3
-reboot
 
 
