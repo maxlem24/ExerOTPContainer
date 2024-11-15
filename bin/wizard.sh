@@ -261,10 +261,10 @@ ask_host_settings(){
 	sed -i -e "s/$DEFAULTDOMAIN/$SUFFIX/g"  ${MAIL_FILE}
 	
 	FQDN="${HOSTNAME}.${SUFFIX}"
-	sed -i -e 's/'"${DEFAULTFQDN}"'/'"${FQDN}"'/g' ${HOSTS_FILE}
-	sed -i -e 's/'"${DEFAULTHOSTNAME}"'/'"${HOSTNAME}"'/g' ${HOSTS_FILE} 
+	sed -i -e "s/${DEFAULTFQDN}/${FQDN}/g" ${HOSTS_FILE}
+	sed -i -e "s/${DEFAULTHOSTNAME}/${HOSTNAME}/g" ${HOSTS_FILE} 
 	
-	sed -i -e 's/'"${DEFAULTDOMAIN}"'/'"${SUFFIX}"'/g' ${DNS_FILE} 
+	sed -i -e "s/${DEFAULTDOMAIN}/${SUFFIX/g" ${DNS_FILE} 
 	
 	if [ $? -ne 0 ]; then
 		echo "[⚠] Error: Unable to configure hostname."
