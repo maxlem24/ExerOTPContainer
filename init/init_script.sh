@@ -27,6 +27,7 @@ echo "search exer.fr" >> /etc/resolv.conf
 
 bash /usr/local/bin/wizard.sh
 
-/etc/init/apache2 restart
+/etc/init.d/apache2 start
+/etc/init.d/freeradius start
 
 /bin/bash
