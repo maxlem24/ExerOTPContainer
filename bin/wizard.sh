@@ -327,7 +327,6 @@ change_admin_mysql_password() {
     else
 		echo $pass > /etc/mysql/otp.conf
 		php /usr/local/bin/app_exerotp.php
-		service mysql restart
     fi
 
     echo ""

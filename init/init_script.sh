@@ -17,8 +17,9 @@ wait_mariadb
 
 sed -i "s/password/$RANDOMPASS/g" /root/init_db.sql
 
+mariadb < /root/exer_db.sql
 mariadb < /root/init_db.sql
-mariadb -u admin_exer -p$RANDOMPASS < /root/exer_db.sql
+
 
 # Network
 
