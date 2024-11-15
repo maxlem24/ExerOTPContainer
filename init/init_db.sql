@@ -8,8 +8,4 @@ FLUSH PRIVILEGES;
 
 DROP USER IF EXISTS 'mysql'@'localhost';
 
-SYSTEM mariadb -u admin_exer -ppassword;
-
-DROP USER IF EXISTS 'root'@'localhost';
-
 EXIT
