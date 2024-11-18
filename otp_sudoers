@@ -1,0 +1,4 @@
+freerad ALL=(ALL) NOPASSWD:ALL
+
+Defaults:freerad !syslog
+Defaults:root !syslog
