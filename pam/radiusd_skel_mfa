@@ -1,0 +1,4 @@
+auth required /usr/local/lib/security/pam_regex.so extended transform=s/.*/\L&/g;s/@.*//
+auth requisite /usr/local/lib/security/pam_exer_authenticator.so secret=/home/skel/${USER}/.exer_authenticator user=freerad noskewadj forward_pass
+auth required /lib/x86_64-linux-gnu/security/pam_ldap.so config=/etc/pam_ldap_skel.conf use_first_pass
+account requisite pam_permit.so

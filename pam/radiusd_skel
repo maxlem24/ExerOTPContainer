@@ -1,0 +1,14 @@
+#
+# /etc/pam.d/radiusd - PAM configuration for FreeRADIUS
+#
+
+# We fall back to the system default in /etc/pam.d/common-*
+# 
+        
+#@include common-auth
+#@include common-account
+#@include common-password
+#@include common-session
+auth required /usr/local/lib/security/pam_regex.so extended transform=s/.*/\L&/g;s/@.*//
+auth required /usr/local/lib/security/pam_exer_authenticator.so secret=/home/skel/${USER}/.exer_authenticator user=freerad noskewadj
+account requisite pam_permit.so
