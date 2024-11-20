@@ -16,7 +16,9 @@ INTERFACE=`ls /sys/class/net -m | cut -f 1 -d ","`
 
 # hosts vars
 HOSTS_FILE="/etc/hosts"
+TEMP_HOSTS_FILE="/tmp/hosts"
 DNS_FILE="/etc/resolv.conf"
+TEMP_DNS_FILE="/tmp/resolv.conf"
 DEFAULTHOSTNAME=`grep 127.0.1.1 /etc/hosts | awk '{print $3}'`
 DEFAULTFQDN=`grep 127.0.1.1 /etc/hosts | awk '{print $2}'`
 DEFAULTDOMAIN=`grep search /etc/resolv.conf | cut -f 2 -d " "`
@@ -25,6 +27,16 @@ DEFAULTNS=`grep nameserver /etc/resolv.conf | cut -f 2 -d " "`
 # to ease reading of script output
 WAIT_SEC="1"
 
+init_temp_files(){
+	cp "${HOSTS_FILE}" "${TEMP_HOSTS_FILE}"
+	cp "${DNS_FILE}" "${TEMP_DNS_FILE}"
+}
+
+
+copy_temp_files(){
+	cat "${TEMP_HOSTS_FILE}" > "${HOSTS_FILE}"
+	cat "${TEMP_DNS_FILE}" > "${DNS_FILE}"
+}
 
 valid_ip(){
         VALID=`echo $1 | grep -P "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"`
@@ -117,12 +129,12 @@ ask_dns_settings(){
 		if [ $(( ${ALLIP} )) = 1 ]; then
 			# Toutes les IP sont valides donc on peut écrire la configuration
 			ERR_DNS_CONFIG=0
-			sed -i '/^nameserver/d' ${DNS_FILE}
+			sed -i '/^nameserver/d' ${TEMP_DNS_FILE}
 			for (( i=0; i<${#myarray[@]}; i++ )); do
-				echo "nameserver ${myarray[$i]}" >> ${DNS_FILE}
+				echo "nameserver ${myarray[$i]}" >> ${TEMP_DNS_FILE}
 			done	
 			if [ $? -ne 0 ]; then
-				echo "[⚠] Error: Unable to set NTP Servers."
+				echo "[⚠] Error: Unable to set DNS Servers."
 				return 1
 			fi
 		fi
@@ -261,10 +273,10 @@ ask_host_settings(){
 	sed -i -e "s/$DEFAULTDOMAIN/$SUFFIX/g"  ${MAIL_FILE}
 	
 	FQDN="${HOSTNAME}.${SUFFIX}"
-	sed -i -e "s/${DEFAULTFQDN}/${FQDN}/g" ${HOSTS_FILE}
-	sed -i -e "s/${DEFAULTHOSTNAME}/${HOSTNAME}/g" ${HOSTS_FILE} 
+	sed -i -e "s/${DEFAULTFQDN}/${FQDN}/g" ${TEMP_HOSTS_FILE}
+	sed -i -e "s/${DEFAULTHOSTNAME}/${HOSTNAME}/g" ${TEMP_HOSTS_FILE} 
 	
-	sed -i -e "s/${DEFAULTDOMAIN}/${SUFFIX}/g" ${DNS_FILE} 
+	sed -i -e "s/${DEFAULTDOMAIN}/${SUFFIX}/g" ${TEMP_DNS_FILE} 
 	
 	if [ $? -ne 0 ]; then
 		echo "[⚠] Error: Unable to configure hostname."
@@ -457,23 +469,19 @@ echo "[⚠] You can quit at anytime using CTRL+C"
 echo "[⚠] Use wizard.sh without option to start over"
 echo ""
 
-delete_call_to_wizard
+init_temp_files
 
-# ask_for_keyboard_language
-
-# ask_network_settings
-# while [ $? -ne 0 ]; do
-	# sleep ${WAIT_SEC}
-	# ask_network_settings
-# done
+conf_mail
+while [ $? -ne 0 ]; do
+	sleep ${WAIT_SEC}
+	conf_mail
+done
 
 ask_time_settings
 
 ask_host_settings
 
 ask_dns_settings
-
-# change_password
 
 change_admin_mysql_password
 
@@ -482,6 +490,8 @@ regenerate_ssh_keys
 sleep ${WAIT_SEC}
 
 regenerate_ssl_cert
+
+copy_temp_files
 
 echo ""
 echo "+------------------------------------------+"
