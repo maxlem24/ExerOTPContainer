@@ -19,7 +19,7 @@ sed -i "s/password/$RANDOMPASS/g" /root/init_db.sql
 
 mariadb < /root/exer_db.sql
 mariadb < /root/init_db.sql
-
+sleep 1
 mariadb -u admin_exer -p$RANDOMPASS -e "DROP USER IF EXISTS 'root'@'localhost';"
 
 # Network
