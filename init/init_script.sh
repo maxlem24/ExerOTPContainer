@@ -1,5 +1,3 @@
-RANDOMPASS=$(cat /etc/mysql/otp.conf)
-
 wait_mariadb(){
 	until nc -z -w5 localhost 3306; do
 		sleep 1
@@ -15,20 +13,23 @@ wait_mariadb(){
 
 wait_mariadb
 
+tr -dc A-Za-z0-9 < /dev/urandom | head -c 12 > /etc/mysql/otp.conf
+
+RANDOMPASS=$(cat /etc/mysql/otp.conf)
+
 sed -i "s/password/$RANDOMPASS/g" /root/init_db.sql
 
 mariadb < /root/exer_db.sql
 mariadb < /root/init_db.sql
 sleep 1
 mariadb -u admin_exer -p$RANDOMPASS -e "DROP USER IF EXISTS 'root'@'localhost';"
+php /usr/local/bin/app_exerotp.php
 
 # Network
 
 sed "2i127.0.1.1 EXER-TOTP.exer.fr EXER-TOTP" /etc/hosts > /tmp/temp && cat /tmp/temp > /etc/hosts
 echo "domain exer.fr" >> /etc/resolv.conf
 echo "search exer.fr" >> /etc/resolv.conf
-
-bash /usr/local/bin/wizard.sh
 
 # Freeradius
 
@@ -46,6 +47,10 @@ ln -s /etc/freeradius/mods-enabled /etc/freeradius/3.0/mods-enabled
 ln -s /etc/freeradius/mods-config /etc/freeradius/3.0/mods-config
 ln -s /etc/freeradius/sites-enabled /etc/freeradius/3.0/sites-enabled
 ln -s /etc/freeradius/policy.d /etc/freeradius/3.0/policy.d
+
+# User init
+
+sed -i -e 's,'/bin/bash','/usr/local/bin/wizard.sh',g' /etc/passwd
 
 /etc/init.d/apache2 restart
 /etc/init.d/freeradius restart

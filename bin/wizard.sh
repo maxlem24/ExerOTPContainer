@@ -1,18 +1,13 @@
 #!/bin/bash
-#Derniere modification le : 21/07/2023
-#Par : Laurent ASSELIN
+#Derniere modification le : 21/11/2024
+#Par : Maxime LEMAITRE
 
 # network vars
-NETWORK_FILE="/etc/network/interfaces"
 MAIL_FILE="/etc/postfix/main.cf"
 NTP_FILE="/etc/systemd/timesyncd.conf"
 DEFAULTNTP=`egrep -i '^(|#)ntp' /etc/systemd/timesyncd.conf | cut -d "=" -f2`
 DEFAULTML=`grep relayhost "${MAIL_FILE}" | cut -f 3 -d " " `
-DEFAULTIF=`grep allow-hotplug /etc/network/interfaces | cut -f 2 -d " "`
-DEFAULTIP=`grep address /etc/network/interfaces | cut -f 2 -d " "`
 DEFAULTMK=`grep netmask /etc/network/interfaces | cut -f 2 -d " "`
-DEFAULTGW=`grep gateway /etc/network/interfaces | cut -f 2 -d " "`
-INTERFACE=`ls /sys/class/net -m | cut -f 1 -d ","`
 
 # hosts vars
 HOSTS_FILE="/etc/hosts"
@@ -31,7 +26,6 @@ init_temp_files(){
 	cp "${HOSTS_FILE}" "${TEMP_HOSTS_FILE}"
 	cp "${DNS_FILE}" "${TEMP_DNS_FILE}"
 }
-
 
 copy_temp_files(){
 	cat "${TEMP_HOSTS_FILE}" > "${HOSTS_FILE}"
@@ -55,28 +49,6 @@ valid_fqdn(){
         else
                 return 0
         fi
-}
-
-
-conf_gateway(){
-
-	read -p "[➖] Default gateway: [${DEFAULTGW}] " GATEWAY
-    if [ -z "${GATEWAY}" ]; then
-		GATEWAY="${DEFAULTGW}"
-	fi
-	valid_ip "${GATEWAY}"
-	if [ $? -ne 0 ]; then
-		echo "[⚠] Error: The address is invalid."
-		return 1
-	fi
-
-	sed -i -e 's/'"gateway ${DEFAULTGW}"'/'"gateway ${GATEWAY}"'/g' ${NETWORK_FILE}
-	if [ $? -ne 0 ]; then
-		echo "[⚠] Error: Unable to set default gateway."
-		return 1
-	fi
-
-	return 0
 }
 
 conf_mail(){
@@ -174,66 +146,6 @@ conf_ntp(){
 	return 0
 }
 
-ask_if_config(){
-
-	read -p "[➖] IP Address : [${DEFAULTIP}] " ADDRESS
-	if [ -z "${ADDRESS}" ]; then
-		ADDRESS="${DEFAULTIP}"
-	fi
-	# Static IP
-	valid_ip "${ADDRESS}"
-	if [ $? -ne 0 ]; then
-		echo "[⚠] Error: The address entered is invalid."
-		return 1
-	fi
-
-	read -p "[➖] Subnet mask : [${DEFAULTMK}] " MASK
-	if [ -z "${MASK}" ]; then
-		MASK="${DEFAULTMK}"
-	fi
-	valid_ip "${MASK}"
-	if [ $? -ne 0 ]; then
-		echo "[⚠]Error: The address entered is invalid."
-		return 1
-	fi
-
-	sed -i -e 's/'"${DEFAULTIF}"'/'"${INTERFACE}"'/g' ${NETWORK_FILE}
-	sed -i -e 's/'"address ${DEFAULTIP}"'/'"address ${ADDRESS}"'/g' ${NETWORK_FILE}
-	sed -i -e 's/'"netmask ${DEFAULTMK}"'/'"netmask ${MASK}"'/g' ${NETWORK_FILE}
-	
-	if [ $? -ne 0 ]; then
-		echo "[⚠] Error: Unable to configure network."
-		return 1
-	fi
-
-	return 0
-}
-
-
-ask_network_settings(){
-		ERR_NET_CONFIG=1
-		ERR_MAIL_CONFIG=1
-		while [ ${ERR_NET_CONFIG} -ne 0 ]; do
-			ask_if_config
-			ERR_NET_CONFIG=$?
-
-			if [ ${ERR_NET_CONFIG} -eq 0 ]; then
-					# Static: Ask for a static gateway IP address
-					conf_gateway
-					ERR_NET_CONFIG=$?
-			fi
-			[ ${ERR_NET_CONFIG} -ne 0 ] && echo "[⚠] Error: incorrect network settings."
-		done
-
-		while [ ${ERR_MAIL_CONFIG} -ne 0 ]; do
-			conf_mail
-			ERR_MAIL_CONFIG=$?
-		done
-		
-
-	ADDRESS0=${ADDRESS}
-}
-
 ask_time_settings(){
 		ERR_NTP_CONFIG=1
 		read -p "[➖] Do you want to change NTP server (y/N)? " REQUEST
@@ -317,12 +229,6 @@ regenerate_ssh_keys() {
 	rm /etc/ssh/ssh_host_*
 	dpkg-reconfigure openssh-server
 }
-
-change_password() {
-	echo ""
-	echo "[〽] Please choose a new password for the 'root' account (for the console):"
-	passwd root
-	}
 
 change_admin_mysql_password() {
     OLDMDP=$(cat /etc/mysql/otp.conf | tr -d " \t\n\r")
@@ -413,36 +319,24 @@ esac
 }
 
 # Main Wizard
-USAGE="Usage: $0 [-d] [-h] [-k] [-n] [-t]\n\t -d : Change DNS Servers\n\t -h : Change Hostname\n\t -k : Change Keyboard\n\t -n : Change Network settings\n\t -t : Change Time Settings"
+USAGE="Usage: $0 [-d] [-h] [-t]\n\t -d : Change DNS Servers\n\t -h : Change Hostname\n\t -t : Change Time Settings"
+
+init_temp_files
 
 while getopts dhknt OPT; do
     case "$OPT" in
       d)
         echo " "
 		ask_dns_settings
+		copy_temp_files
 		echo " "
 		exit 0 ;;
 	  h)
         echo " "
 		ask_host_settings
+		copy_temp_files
 		echo " "
 		exit 0 ;;
-      k)
-		echo " "
-		ask_for_keyboard_language
-		echo " "
-		exit 0 ;;
-	  n)
-	  	echo " "
-		ask_network_settings
-		while [ $? -ne 0 ]; do
-			sleep ${WAIT_SEC}
-			ask_network_settings
-		done
-		echo " "
-		echo "Please reboot in order new IP Settings to be taken into account"
-		echo " "
-		exit 0;;
 	  t)
         echo " "
 		ask_time_settings
@@ -469,7 +363,9 @@ echo "[⚠] You can quit at anytime using CTRL+C"
 echo "[⚠] Use wizard.sh without option to start over"
 echo ""
 
-init_temp_files
+delete_call_to_wizard
+
+trap copy_temp_file SIGINT SIGTERM
 
 conf_mail
 while [ $? -ne 0 ]; do
