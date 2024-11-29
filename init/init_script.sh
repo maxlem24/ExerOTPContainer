@@ -22,6 +22,8 @@ sed -i "s/password/$RANDOMPASS/g" /root/init_db.sql
 mariadb < /root/exer_db.sql
 mariadb < /root/init_db.sql
 sleep 1
+
+# Remove root user
 mariadb -u admin_exer -p$RANDOMPASS -e "DROP USER IF EXISTS 'root'@'localhost';"
 php /usr/local/bin/app_exerotp.php
 
@@ -48,9 +50,12 @@ ln -s /etc/freeradius/mods-config /etc/freeradius/3.0/mods-config
 ln -s /etc/freeradius/sites-enabled /etc/freeradius/3.0/sites-enabled
 ln -s /etc/freeradius/policy.d /etc/freeradius/3.0/policy.d
 
-# User init
+# Remove init SQL files and make wizard.sh more accessible
 
-sed -i -e 's,'/bin/bash','/usr/local/bin/wizard.sh',g' /etc/passwd
+rm /root/*.sql
+ln -s /usr/local/bin/wizard.sh /root/wizard.sh
+
+# Restart the services
 
 /etc/init.d/apache2 restart
 /etc/init.d/freeradius restart
