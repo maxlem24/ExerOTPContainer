@@ -2,6 +2,7 @@
 
 ## Files contents :
 
+- /apache : configuration file of apache site
 - /bin : copy of /usr/local/bin 
 
 **Warning :** *wizard.sh* has been modified to replace sed in the host files, and to remove the possibility to change the IP address	

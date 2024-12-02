@@ -33,6 +33,11 @@ sed "2i127.0.1.1 EXER-TOTP.exer.fr EXER-TOTP" /etc/hosts > /tmp/temp && cat /tmp
 echo "domain exer.fr" >> /etc/resolv.conf
 echo "search exer.fr" >> /etc/resolv.conf
 
+# Apache
+
+rm /etc/apache2/sites-enabled/*
+ln -s /etc/apache2/sites-available/exer_otp.conf /etc/apache2/sites-enabled/exer_otp.conf
+
 # Freeradius
 
 # Linking available <=> enabled
